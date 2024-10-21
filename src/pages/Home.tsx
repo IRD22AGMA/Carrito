@@ -1,47 +1,69 @@
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from 'react';
 
-function Home() {
-    const [data, setData] = useState([])  /// Este almacena los datos de la API
+// Definimos el tipo Product para los productos
+type Product = {
+  id: number;
+  title: string;
+  price: number;
+  image: string;
+};
 
-    // Función asíncrona que realiza una petición a una API y me devuelve un JSON
-    const getProducts = async () => {
-        const response = await fetch("https://fakestoreapi.com/products/")
-        const json = await response.json()
-        setData(json)
-        console.log(json)
-    }
+// Definimos las props que el componente Home recibe
+type HomeProps = {
+  onAddToCart: (product: Product) => void;
+  searchTerm: string;
+};
 
-    // detecta cuando algo cambia en la app e invoca a getProducts
-    useEffect(() => {
-        getProducts()
-        console.log(data)
-    }, [])
+const Home: React.FC<HomeProps> = ({ onAddToCart, searchTerm }) => {
+  const [products, setProducts] = useState<Product[]>([]);
 
-    return (
-        <>
-            <div className="container">
-                <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-                    {data.map((product)=>(
-                    <div class="card mb-3" style={{ 'max-width': '540px;' }}>
-                        <div className="row g-0">
-                            <div className="col-md-4">
-                                <img src={product.image} className="img-fluid rounded-start" alt="..." />
-                            </div>
-                            <div className="col-md-8">
-                                <div className="card-body">
-                                    <h5 className="card-title">{product.title}</h5>
-                                    <p className="card-text">Descripción</p>
-                                    <p className="card-text"><small className="text-body-secondary">$ {product.price}</small></p>
-                                    <button className="btn btn-primary">Agregar a Carrito</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    ))}
-                </div>
+  // Obtener productos desde la API al montar el componente
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('https://fakestoreapi.com/products');
+        const data = await response.json();
+        setProducts(data); // Guardamos los productos en el estado
+      } catch (error) {
+        console.error('Error al obtener los productos:', error);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  // Filtrar los productos según el término de búsqueda
+  const filteredProducts = products.filter(product =>
+    product.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="container">
+      <div className="row">
+        {filteredProducts.map(product => (
+          <div key={product.id} className="col-md-4 mb-4">
+            <div className="card h-100 shadow-sm border-0">
+              <img 
+                src={product.image} 
+                className="card-img-top" 
+                alt={product.title} 
+                style={{ height: '250px', objectFit: 'contain' }} 
+              />
+              <div className="card-body d-flex flex-column">
+                <h5 className="card-title text-center">{product.title}</h5>
+                <p className="card-text text-center fw-bold text-primary">${product.price}</p>
+                <button 
+                  className="btn btn-outline-primary mt-auto" 
+                  onClick={() => onAddToCart(product)}
+                >
+                  Agregar a Carrito
+                </button>
+              </div>
             </div>
-        </>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
-    )
-}
-export default Home
+export default Home;
